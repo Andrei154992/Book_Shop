@@ -1,0 +1,324 @@
+package com.example.myapplication_1.User_Interface;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.example.myapplication_1.Admin.Admin_Category_Activity;
+import com.example.myapplication_1.Model.Products;
+import com.example.myapplication_1.Model.Users;
+import com.example.myapplication_1.Prevalent.Prevalent;
+import com.example.myapplication_1.R;
+import com.example.myapplication_1.Users.Category;
+import com.example.myapplication_1.Users.Home_Activity;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.rey.material.widget.CheckBox;
+import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import io.paperdb.Paper;
+
+public class Login_Activity extends AppCompatActivity {
+
+    private Button login_btn;
+    private EditText phoneInput, passwordInput;
+    private ProgressDialog loadingbar;
+    private TextView admin_link, not_admin_link;
+    private List<String> listData;
+    private ArrayAdapter<String> adapter;
+
+    private String parentDbName = "Users";
+
+    private CheckBox checkBoxRememberMe;
+
+    private FirebaseAuth f_auth;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_login);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        init();
+
+        FirebaseUser cuser = f_auth.getCurrentUser();
+        if (cuser != null){
+            Toast.makeText(Login_Activity.this, "Успешный вход " + cuser.getEmail(), Toast.LENGTH_SHORT).show();
+            Intent registration_intent = new Intent(Login_Activity.this, Home_Activity.class);
+            startActivity(registration_intent);
+        }
+        else {
+            Toast.makeText(Login_Activity.this, "Необходимо войти", Toast.LENGTH_SHORT).show();
+        }
+
+        login_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loginUser();
+            }
+        });
+
+        admin_link.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                admin_link.setVisibility(View.INVISIBLE);
+                not_admin_link.setVisibility(View.VISIBLE);
+                login_btn.setText("Вход для администратора");
+                parentDbName = "Admins";
+            }
+        });
+
+        not_admin_link.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                admin_link.setVisibility(View.VISIBLE);
+                not_admin_link.setVisibility(View.INVISIBLE);
+                login_btn.setText("Войти");
+                parentDbName = "Users";
+            }
+        });
+
+    }
+
+    private void loginUser() {
+
+        String phone = phoneInput.getText().toString();
+        String password = passwordInput.getText().toString();
+
+        if((TextUtils.isEmpty(phone)))
+        {
+            Toast.makeText(this, "Введите номер", Toast.LENGTH_SHORT).show();
+        }
+        else if((TextUtils.isEmpty(password)))
+        {
+            Toast.makeText(this, "Введите пароль", Toast.LENGTH_SHORT).show();
+        }
+        else{
+            loadingbar.setTitle("Вход в приложение");
+            loadingbar.setMessage("Пожалуйста, подождите...");
+            loadingbar.setCanceledOnTouchOutside(true);
+            loadingbar.show();
+            ValidateUser(phone, password);
+        }
+    }
+
+    private void ValidateUser(String phone, String password) {
+
+        if (checkBoxRememberMe.isChecked()){
+            Paper.book().write(Prevalent.UserPhoneKey, phone);
+            Paper.book().write(Prevalent.UserPasswordKey, password);
+        }
+
+        f_auth.signInWithEmailAndPassword(phone, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful())
+                {
+                    if (parentDbName.equals("Users")){
+                        loadingbar.dismiss();
+                        Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+
+                        Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
+                        startActivity(home_intent);
+                    }
+                    else if (parentDbName.equals("Admins")){
+                        loadingbar.dismiss();
+                        Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+
+                        Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
+                        startActivity(admin_category_intent);
+                    }
+                }
+                else{
+
+                    loadingbar.dismiss();
+
+                    try {
+                        throw Objects.requireNonNull(task.getException());
+                    }  catch(FirebaseAuthInvalidCredentialsException e) {
+                        Toast.makeText(Login_Activity.this, "Предоставленные учетные данные для проверки подлинности неверны", Toast.LENGTH_LONG).show();
+                        Toast.makeText(Login_Activity.this, "неправильно сформированы или срок их действия истек.", Toast.LENGTH_LONG).show();
+                        phoneInput.requestFocus();
+                    } catch(Exception e) {
+                        Toast.makeText(Login_Activity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+
+                }
+            }
+        });
+
+        /*FirebaseUser f_user = f_auth.getCurrentUser();
+        if (f_user != null){
+            if (parentDbName.equals("Users")){
+                loadingbar.dismiss();
+                Toast.makeText(Login_Activity.this, "Успешный вход " + f_user.getEmail(), Toast.LENGTH_SHORT).show();
+
+                Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
+                startActivity(home_intent);
+            }
+            else if (parentDbName.equals("Admins")){
+                loadingbar.dismiss();
+                Toast.makeText(Login_Activity.this, "Успешный вход, Admin, " + f_user.getEmail(), Toast.LENGTH_SHORT).show();
+
+                Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
+                startActivity(admin_category_intent);
+            }
+        }
+        else{
+            Toast.makeText(Login_Activity.this, "Неправильно, ебаные волки. Широкую на широкую!!!", Toast.LENGTH_SHORT).show();
+        }*/
+
+        /*FirebaseDatabase.getInstance().getReference("User").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                if (listData.size() > 0){
+                    listData.clear();
+                }
+                for(DataSnapshot ds : snapshot.getChildren())
+                {
+                    Users userData = ds.getValue(Users.class);
+                    assert userData != null;
+                    if (userData.getPhone().equals(phone)){
+                        listData.add(userData.getPhone());
+                        if (userData.getPassword().equals(password)){
+                            if (parentDbName.equals("User")){
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+
+                                Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
+                                startActivity(home_intent);
+                            }
+                            else if (parentDbName.equals("Admins")){
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+
+                                Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
+                                startActivity(admin_category_intent);
+                            }
+                        }
+                        else{
+                            loadingbar.dismiss();
+                            Toast.makeText(Login_Activity.this, "Неверный пароль", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    else{
+                        loadingbar.dismiss();
+                        Toast.makeText(Login_Activity.this, "Аккаунт с номером " + phone + " не существует", Toast.LENGTH_SHORT).show();
+                    }
+                    //passwordInput.setText("hhhhhh");
+                }
+
+                adapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });*/
+
+        /*final DatabaseReference RootRef;
+        RootRef = FirebaseDatabase.getInstance().getReference();
+
+        RootRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.child(parentDbName).child(phone).exists()){
+                    Users userData = snapshot.child(parentDbName).child(phone).getValue(Users.class);
+                    if (userData.getPhone().equals(phone)){
+                        if (userData.getPassword().equals(password)){
+                            if (parentDbName.equals("Users")){
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+
+                                Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
+                                startActivity(home_intent);
+                            }
+                            else if (parentDbName.equals("Admins")){
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+
+                                Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
+                                startActivity(admin_category_intent);
+                            }
+                        }
+                        else{
+                            loadingbar.dismiss();
+                            Toast.makeText(Login_Activity.this, "Неверный пароль", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    else{
+                        loadingbar.dismiss();
+                        Toast.makeText(Login_Activity.this, "Неверный номер телефона", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else{
+                    loadingbar.dismiss();
+                    Toast.makeText(Login_Activity.this, "Аккаунт с номером " + phone + " не существует", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });*/
+
+    }
+
+    private void init(){
+
+        login_btn = findViewById(R.id.login_btn);
+        phoneInput = findViewById(R.id.login_phone_input);
+        passwordInput = findViewById(R.id.login_password_input);
+        checkBoxRememberMe = findViewById(R.id.login_checkbox);
+        admin_link = findViewById(R.id.admin_panel_link);
+        not_admin_link = findViewById(R.id.not_admin_panel_link);
+
+        loadingbar = new ProgressDialog(this);
+
+        Paper.init(this);
+
+        f_auth = FirebaseAuth.getInstance();
+
+        listData = new ArrayList<>();
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
+
+    }
+}
