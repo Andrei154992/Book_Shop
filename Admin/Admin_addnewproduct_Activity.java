@@ -172,7 +172,7 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
         saveCurrentTime = currentTime.format(calendar.getTime());
 
         productRandomKey = saveCurrentDate + saveCurrentTime;
-
+//
 
         Bitmap bitmap = ((BitmapDrawable) productImage.getDrawable()).getBitmap();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
