@@ -19,27 +19,16 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.myapplication_1.Admin.Admin_Category_Activity;
-import com.example.myapplication_1.Model.Products;
-import com.example.myapplication_1.Model.Users;
 import com.example.myapplication_1.Prevalent.Prevalent;
 import com.example.myapplication_1.R;
-import com.example.myapplication_1.Users.Category;
 import com.example.myapplication_1.Users.Home_Activity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
-import com.google.firebase.auth.FirebaseAuthUserCollisionException;
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.rey.material.widget.CheckBox;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,16 +63,6 @@ public class Login_Activity extends AppCompatActivity {
         });
 
         init();
-
-        FirebaseUser cuser = f_auth.getCurrentUser();
-        if (cuser != null){
-            Toast.makeText(Login_Activity.this, "Успешный вход " + cuser.getEmail(), Toast.LENGTH_SHORT).show();
-            Intent registration_intent = new Intent(Login_Activity.this, Home_Activity.class);
-            startActivity(registration_intent);
-        }
-        else {
-            Toast.makeText(Login_Activity.this, "Необходимо войти", Toast.LENGTH_SHORT).show();
-        }
 
         login_btn.setOnClickListener(new View.OnClickListener() {
             @Override

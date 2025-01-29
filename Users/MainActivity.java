@@ -16,7 +16,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.myapplication_1.Admin.Nav_Activity;
 import com.example.myapplication_1.User_Interface.Login_Activity;
 import com.example.myapplication_1.Model.Users;
 import com.example.myapplication_1.Prevalent.Prevalent;
@@ -65,6 +64,17 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Вы вышли из аккаунта", Toast.LENGTH_SHORT).show();
             }
         });
+
+        FirebaseUser cuser = f_auth.getCurrentUser();
+        if (cuser != null){
+            Toast.makeText(MainActivity.this, "Успешный вход " + cuser.getEmail(), Toast.LENGTH_SHORT).show();
+            Intent registration_intent = new Intent(MainActivity.this, Home_Activity.class);
+            startActivity(registration_intent);
+        }
+        else {
+            Toast.makeText(MainActivity.this, "Необходимо войти", Toast.LENGTH_SHORT).show();
+        }
+
 
         login_btn.setOnClickListener(new View.OnClickListener() {
             @Override
