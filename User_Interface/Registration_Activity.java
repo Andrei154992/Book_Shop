@@ -163,7 +163,8 @@ public class Registration_Activity extends AppCompatActivity {
                     userInfo.put("phone", binding.registerPhoneInput.getText().toString());
                     userInfo.put("password", binding.registerPasswordInput.getText().toString());
                     userInfo.put("name", binding.registerUsernamepInput.getText().toString());
-                    RootRef.child("User").child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).setValue(userInfo);
+                    RootRef.child(Key).child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).setValue(userInfo);
+
                     Toast.makeText(Registration_Activity.this, "Регистрация прошла успешно", Toast.LENGTH_SHORT).show();
                     Intent login_intent = new Intent(Registration_Activity.this, Login_Activity.class);
                     startActivity(login_intent);

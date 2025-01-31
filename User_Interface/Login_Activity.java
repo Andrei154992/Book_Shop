@@ -19,6 +19,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.myapplication_1.Admin.Admin_Category_Activity;
+import com.example.myapplication_1.Model.Users;
 import com.example.myapplication_1.Prevalent.Prevalent;
 import com.example.myapplication_1.R;
 import com.example.myapplication_1.Users.Home_Activity;
@@ -28,6 +29,11 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.rey.material.widget.CheckBox;
 
 import java.util.ArrayList;
@@ -45,7 +51,7 @@ public class Login_Activity extends AppCompatActivity {
     private List<String> listData;
     private ArrayAdapter<String> adapter;
 
-    private String parentDbName = "Users";
+    private String parentDbName = "User";
 
     private CheckBox checkBoxRememberMe;
 
@@ -77,7 +83,7 @@ public class Login_Activity extends AppCompatActivity {
                 admin_link.setVisibility(View.INVISIBLE);
                 not_admin_link.setVisibility(View.VISIBLE);
                 login_btn.setText("Вход для администратора");
-                parentDbName = "Admins";
+                parentDbName = "Admin";
             }
         });
 
@@ -87,7 +93,7 @@ public class Login_Activity extends AppCompatActivity {
                 admin_link.setVisibility(View.VISIBLE);
                 not_admin_link.setVisibility(View.INVISIBLE);
                 login_btn.setText("Войти");
-                parentDbName = "Users";
+                parentDbName = "User";
             }
         });
 
@@ -111,41 +117,54 @@ public class Login_Activity extends AppCompatActivity {
             loadingbar.setMessage("Пожалуйста, подождите...");
             loadingbar.setCanceledOnTouchOutside(true);
             loadingbar.show();
-            ValidateUser(phone, password);
+
+            if (parentDbName.equals("User")){
+                ValidateUser(phone, password);
+            }
+            else if (parentDbName.equals("Admin")){
+                ValidateAdmin(phone, password);
+            }
         }
     }
 
-    private void ValidateUser(String phone, String password) {
-
-        if (checkBoxRememberMe.isChecked()){
-            Paper.book().write(Prevalent.UserPhoneKey, phone);
-            Paper.book().write(Prevalent.UserPasswordKey, password);
-        }
+    private void ValidateAdmin(String phone, String password){
 
         f_auth.signInWithEmailAndPassword(phone, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful())
                 {
-                    if (parentDbName.equals("Users")){
-                        loadingbar.dismiss();
-                        Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+                    final DatabaseReference RootRef;
+                    RootRef = FirebaseDatabase.getInstance().getReference();
 
-                        Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
-                        startActivity(home_intent);
-                    }
-                    else if (parentDbName.equals("Admins")){
-                        loadingbar.dismiss();
-                        Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+                    RootRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (Objects.equals(f_auth.getUid(), "rBbiL7t7OpUcdycESHkXkZ67MXe2"))
+                            {
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Успешный вход, администратор!", Toast.LENGTH_SHORT).show();
 
-                        Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
-                        startActivity(admin_category_intent);
-                    }
+                                Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
+                                startActivity(admin_category_intent);
+                            }
+                            else{
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Вход только для администратора", Toast.LENGTH_LONG).show();
+                                f_auth.signOut();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            loadingbar.dismiss();
+                            Toast.makeText(Login_Activity.this, "Ошибка", Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
                 else{
 
                     loadingbar.dismiss();
-
                     try {
                         throw Objects.requireNonNull(task.getException());
                     }  catch(FirebaseAuthInvalidCredentialsException e) {
@@ -156,6 +175,38 @@ public class Login_Activity extends AppCompatActivity {
                         Toast.makeText(Login_Activity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                     }
 
+                }
+            }
+        });
+    }
+
+    private void ValidateUser(String phone, String password) {
+
+        f_auth.signInWithEmailAndPassword(phone, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful())
+                {
+                    if (parentDbName.equals("User")){
+                        loadingbar.dismiss();
+                        Toast.makeText(Login_Activity.this, "Успешный вход " + f_auth.getCurrentUser(), Toast.LENGTH_SHORT).show();
+
+                        Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
+                        startActivity(home_intent);
+                    }
+                }
+                else{
+
+                    loadingbar.dismiss();
+                    try {
+                        throw Objects.requireNonNull(task.getException());
+                    }  catch(FirebaseAuthInvalidCredentialsException e) {
+                        Toast.makeText(Login_Activity.this, "Предоставленные учетные данные для проверки подлинности неверны", Toast.LENGTH_LONG).show();
+                        Toast.makeText(Login_Activity.this, "неправильно сформированы или срок их действия истек.", Toast.LENGTH_LONG).show();
+                        phoneInput.requestFocus();
+                    } catch(Exception e) {
+                        Toast.makeText(Login_Activity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });
@@ -279,6 +330,10 @@ public class Login_Activity extends AppCompatActivity {
             }
         });*/
 
+        /*if (checkBoxRememberMe.isChecked()){
+            Paper.book().write(Prevalent.UserPhoneKey, phone);
+            Paper.book().write(Prevalent.UserPasswordKey, password);
+        }*/
     }
 
     private void init(){
@@ -286,7 +341,7 @@ public class Login_Activity extends AppCompatActivity {
         login_btn = findViewById(R.id.login_btn);
         phoneInput = findViewById(R.id.login_phone_input);
         passwordInput = findViewById(R.id.login_password_input);
-        checkBoxRememberMe = findViewById(R.id.login_checkbox);
+        //checkBoxRememberMe = findViewById(R.id.login_checkbox);
         admin_link = findViewById(R.id.admin_panel_link);
         not_admin_link = findViewById(R.id.not_admin_panel_link);
 

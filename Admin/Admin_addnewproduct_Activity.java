@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.storage.StorageManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -24,15 +23,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.myapplication_1.Model.Products;
-import com.example.myapplication_1.Model.Users;
 import com.example.myapplication_1.R;
-import com.example.myapplication_1.User_Interface.Login_Activity;
-import com.example.myapplication_1.User_Interface.Registration_Activity;
-import com.example.myapplication_1.ViewHolder.ProductViewHolder;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -42,14 +35,12 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.rey.material.drawable.CircularProgressDrawable;
 import com.squareup.picasso.Picasso;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -172,7 +163,7 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
         saveCurrentTime = currentTime.format(calendar.getTime());
 
         productRandomKey = saveCurrentDate + saveCurrentTime;
-//
+
 
         Bitmap bitmap = ((BitmapDrawable) productImage.getDrawable()).getBitmap();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -297,7 +288,7 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
         productImage = findViewById(R.id.select_product_image);
         productName = findViewById(R.id.product_name);
         productDescription = findViewById(R.id.product_description);
-        productPrice = findViewById(R.id.product_price);
+        productPrice = findViewById(R.id.product_name1);
         addNewproduct_btn = findViewById(R.id.button_add_newproduct);
 
 
