@@ -2,30 +2,40 @@ package com.example.myapplication_1.Model;
 
 public class Products {
 
-    private  String name, description, price, image, category, pid, date, time;
+    private  String id, name, author, description, price, image, date, time;
 
     public Products(){
 
     }
 
-    public Products(String name, String description, String price, String image, String category, String pid, String date, String time) {
+    public Products(String id, String name, String author, String description, String price, String image, String date, String time) {
+        this.id = id;
         this.name = name;
+        this.author = author;
         this.description = description;
         this.price = price;
         this.image = image;
-        this.category = category;
-        this.pid = pid;
         this.date = date;
         this.time = time;
     }
 
-    public String getPname() {
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
         return name;
     }
 
-    public void setPname(String name) {
-        this.name = name;
-    }
+    public void setName(String name) { this.name = name; }
+
+    public String getAuthor() { return author; }
+
+    public void setAuthor(String author) { this.author = author; }
 
     public String getDescription() {
         return description;
@@ -49,22 +59,6 @@ public class Products {
 
     public void setImage(String image) {
         this.image = image;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getPid() {
-        return pid;
-    }
-
-    public void setPid(String pid) {
-        this.pid = pid;
     }
 
     public String getDate() {

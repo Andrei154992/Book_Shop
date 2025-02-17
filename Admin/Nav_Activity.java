@@ -1,16 +1,14 @@
 package com.example.myapplication_1.Admin;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +19,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.myapplication_1.Model.Nav;
 import com.example.myapplication_1.R;
 import com.example.myapplication_1.Users.Home_Activity;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -34,31 +34,31 @@ import java.util.Objects;
 
 public class Nav_Activity extends AppCompatActivity {
 
-    private TextView app_s;
-    private ProgressDialog loadingbar;
-    private ImageButton bacK_btn;
+    private ImageButton bacK_btn, del_btn;
 
-    private ArrayAdapter<String> adapter;
-    private List<String> listData;
-    private ListView listView;
+    private ArrayAdapter<String> adapter1;
+    private List<String> listData1;
+    private ListView listView1;
 
-    private DatabaseReference RootRef;
-    private FirebaseAuth f_auth;
+    private DatabaseReference RootRef1;
+    private FirebaseAuth f_auth1;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_nav);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main2), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
         setContentView(R.layout.activity_nav);
+
         init();
-        ValidateUser();
+        Output_nav();
 
         bacK_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,25 +68,74 @@ public class Nav_Activity extends AppCompatActivity {
             }
         });
 
+        del_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                RootRef1.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@androidx.annotation.NonNull DataSnapshot snapshot) {
+                        snapshot.getRef().removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@androidx.annotation.NonNull Task<Void> task) {
+                                if(task.isSuccessful()){
+                                    Toast.makeText(Nav_Activity.this, "Корзина очищена", Toast.LENGTH_SHORT).show();
+                                }
+                                else {
+                                    Toast.makeText(Nav_Activity.this, "Ошибка: " + task.getException(), Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
+                        Toast.makeText(Nav_Activity.this, "Ошибка: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        });
+
     }
 
-    private void ValidateUser() {
 
-        RootRef.addValueEventListener(new ValueEventListener() {
+
+    private void Output_nav() {
+
+        RootRef1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                if (listData.size() > 0){
-                    listData.clear();
+                if (!listData1.isEmpty()){
+                    listData1.clear();
                 }
+                String name = "";
                 for(DataSnapshot ds : snapshot.getChildren())
                 {
+                    /*Nav user = ds.getValue(Nav.class);
+                    assert user != null;
+                    listData1.add(user.getNname());*/
                     Nav user = ds.getValue(Nav.class);
                     assert user != null;
-                    listData.add(user.getNname());
+                    name = user.getNname();
+                    int count = 0;
+
+                    for (int i = 0; i < listData1.size(); i++){
+                        if (Objects.equals(listData1.get(i), name))
+                        {
+                            count++;
+                        }
+                    }
+                    if (count == 0)
+                    {
+                        listData1.add(user.getNname());
+                    }
                 }
 
-                adapter.notifyDataSetChanged();
+                if(listData1.isEmpty()){
+                    listData1.add("Ваша корзина пуста");
+                }
+
+                adapter1.notifyDataSetChanged();
 
             }
 
@@ -100,16 +149,16 @@ public class Nav_Activity extends AppCompatActivity {
 
     private void init(){
 
-        bacK_btn = findViewById(R.id.back_btn);
+        bacK_btn = findViewById(R.id.back_btn1);
+        del_btn = findViewById(R.id.delete_btn1);
 
-        loadingbar = new ProgressDialog(this);
-        listView = findViewById(R.id.list);
-        listData = new ArrayList<>();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
-        listView.setAdapter(adapter);
+        listView1 = findViewById(R.id.list1);
+        listData1 = new ArrayList<>();
+        adapter1 = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData1);
+        listView1.setAdapter(adapter1);
 
-        f_auth = FirebaseAuth.getInstance();
-        RootRef = FirebaseDatabase.getInstance().getReference("User").child(Objects.requireNonNull(f_auth.getCurrentUser()).getUid()).child("Избранное");
+        f_auth1 = FirebaseAuth.getInstance();
+        RootRef1 = FirebaseDatabase.getInstance().getReference("User").child(Objects.requireNonNull(f_auth1.getCurrentUser()).getUid()).child("Избранное");
     }
 
 }

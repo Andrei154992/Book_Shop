@@ -16,6 +16,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.myapplication_1.Admin.Admin_Category_Activity;
+import com.example.myapplication_1.Admin.Admin_addnewproduct_Activity;
 import com.example.myapplication_1.User_Interface.Login_Activity;
 import com.example.myapplication_1.Model.Users;
 import com.example.myapplication_1.Prevalent.Prevalent;
@@ -29,6 +31,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Objects;
+
 import io.paperdb.Paper;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private Button join_btn, login_btn, mmm;
     private ProgressDialog loadingbar;
     private FirebaseAuth f_auth = FirebaseAuth.getInstance();
+    private DatabaseReference RootRef;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -43,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main2), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -57,24 +62,38 @@ public class MainActivity extends AppCompatActivity {
 
         Paper.init(this);
 
-        mmm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                f_auth.signOut();
-                Toast.makeText(MainActivity.this, "Вы вышли из аккаунта", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         FirebaseUser cuser = f_auth.getCurrentUser();
-        if (cuser != null){
-            Toast.makeText(MainActivity.this, "Успешный вход " + cuser.getEmail(), Toast.LENGTH_SHORT).show();
-            Intent registration_intent = new Intent(MainActivity.this, Home_Activity.class);
-            startActivity(registration_intent);
+        RootRef = FirebaseDatabase.getInstance().getReference().child("Admin");
+
+        if (cuser != null)
+        {
+            RootRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.child(cuser.getUid()).exists())
+                    {
+                        Toast.makeText(MainActivity.this, "Успешный вход, администратор!", Toast.LENGTH_SHORT).show();
+
+                        Intent admin_category_intent = new Intent(MainActivity.this, Admin_Category_Activity.class);
+                        startActivity(admin_category_intent);
+                    }
+                    else {
+                        Toast.makeText(MainActivity.this, "Успешный вход " + cuser.getEmail(), Toast.LENGTH_SHORT).show();
+
+                        Intent registration_intent = new Intent(MainActivity.this, Home_Activity.class);
+                        startActivity(registration_intent);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
         }
         else {
             Toast.makeText(MainActivity.this, "Необходимо войти", Toast.LENGTH_SHORT).show();
         }
-
 
         login_btn.setOnClickListener(new View.OnClickListener() {
             @Override

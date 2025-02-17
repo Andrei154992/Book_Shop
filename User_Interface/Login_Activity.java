@@ -19,8 +19,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.myapplication_1.Admin.Admin_Category_Activity;
-import com.example.myapplication_1.Model.Users;
-import com.example.myapplication_1.Prevalent.Prevalent;
+import com.example.myapplication_1.Admin.Admin_addnewproduct_Activity;
 import com.example.myapplication_1.R;
 import com.example.myapplication_1.Users.Home_Activity;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -28,7 +27,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -49,20 +47,20 @@ public class Login_Activity extends AppCompatActivity {
     private ProgressDialog loadingbar;
     private TextView admin_link, not_admin_link;
     private List<String> listData;
-    private ArrayAdapter<String> adapter;
 
     private String parentDbName = "User";
 
-    private CheckBox checkBoxRememberMe;
+    //private CheckBox checkBoxRememberMe;
 
     private FirebaseAuth f_auth;
+    private DatabaseReference RootRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main2), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -129,18 +127,17 @@ public class Login_Activity extends AppCompatActivity {
 
     private void ValidateAdmin(String phone, String password){
 
+        RootRef = FirebaseDatabase.getInstance().getReference().child(parentDbName);
+
         f_auth.signInWithEmailAndPassword(phone, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful())
                 {
-                    final DatabaseReference RootRef;
-                    RootRef = FirebaseDatabase.getInstance().getReference();
-
                     RootRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (Objects.equals(f_auth.getUid(), "rBbiL7t7OpUcdycESHkXkZ67MXe2"))
+                            if (snapshot.child(Objects.requireNonNull(f_auth.getUid())).exists())
                             {
                                 loadingbar.dismiss();
                                 Toast.makeText(Login_Activity.this, "Успешный вход, администратор!", Toast.LENGTH_SHORT).show();
@@ -182,18 +179,37 @@ public class Login_Activity extends AppCompatActivity {
 
     private void ValidateUser(String phone, String password) {
 
+        RootRef = FirebaseDatabase.getInstance().getReference().child(parentDbName);
+
         f_auth.signInWithEmailAndPassword(phone, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful())
                 {
-                    if (parentDbName.equals("User")){
-                        loadingbar.dismiss();
-                        Toast.makeText(Login_Activity.this, "Успешный вход " + f_auth.getCurrentUser(), Toast.LENGTH_SHORT).show();
+                    RootRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.child(Objects.requireNonNull(f_auth.getUid())).exists())
+                            {
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Успешный вход " + Objects.requireNonNull(f_auth.getCurrentUser()).getEmail(), Toast.LENGTH_SHORT).show();
 
-                        Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
-                        startActivity(home_intent);
-                    }
+                                Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
+                                startActivity(home_intent);
+                            }
+                            else{
+                                loadingbar.dismiss();
+                                Toast.makeText(Login_Activity.this, "Вход только для пользователей", Toast.LENGTH_LONG).show();
+                                f_auth.signOut();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            loadingbar.dismiss();
+                            Toast.makeText(Login_Activity.this, "Ошибка", Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
                 else{
 
@@ -211,77 +227,7 @@ public class Login_Activity extends AppCompatActivity {
             }
         });
 
-        /*FirebaseUser f_user = f_auth.getCurrentUser();
-        if (f_user != null){
-            if (parentDbName.equals("Users")){
-                loadingbar.dismiss();
-                Toast.makeText(Login_Activity.this, "Успешный вход " + f_user.getEmail(), Toast.LENGTH_SHORT).show();
 
-                Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
-                startActivity(home_intent);
-            }
-            else if (parentDbName.equals("Admins")){
-                loadingbar.dismiss();
-                Toast.makeText(Login_Activity.this, "Успешный вход, Admin, " + f_user.getEmail(), Toast.LENGTH_SHORT).show();
-
-                Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
-                startActivity(admin_category_intent);
-            }
-        }
-        else{
-            Toast.makeText(Login_Activity.this, "Неправильно, ебаные волки. Широкую на широкую!!!", Toast.LENGTH_SHORT).show();
-        }*/
-
-        /*FirebaseDatabase.getInstance().getReference("User").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-                if (listData.size() > 0){
-                    listData.clear();
-                }
-                for(DataSnapshot ds : snapshot.getChildren())
-                {
-                    Users userData = ds.getValue(Users.class);
-                    assert userData != null;
-                    if (userData.getPhone().equals(phone)){
-                        listData.add(userData.getPhone());
-                        if (userData.getPassword().equals(password)){
-                            if (parentDbName.equals("User")){
-                                loadingbar.dismiss();
-                                Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
-
-                                Intent home_intent = new Intent(Login_Activity.this, Home_Activity.class);
-                                startActivity(home_intent);
-                            }
-                            else if (parentDbName.equals("Admins")){
-                                loadingbar.dismiss();
-                                Toast.makeText(Login_Activity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
-
-                                Intent admin_category_intent = new Intent(Login_Activity.this, Admin_Category_Activity.class);
-                                startActivity(admin_category_intent);
-                            }
-                        }
-                        else{
-                            loadingbar.dismiss();
-                            Toast.makeText(Login_Activity.this, "Неверный пароль", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                    else{
-                        loadingbar.dismiss();
-                        Toast.makeText(Login_Activity.this, "Аккаунт с номером " + phone + " не существует", Toast.LENGTH_SHORT).show();
-                    }
-                    //passwordInput.setText("hhhhhh");
-                }
-
-                adapter.notifyDataSetChanged();
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });*/
 
         /*final DatabaseReference RootRef;
         RootRef = FirebaseDatabase.getInstance().getReference();
@@ -350,9 +296,6 @@ public class Login_Activity extends AppCompatActivity {
         Paper.init(this);
 
         f_auth = FirebaseAuth.getInstance();
-
-        listData = new ArrayList<>();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
 
     }
 }

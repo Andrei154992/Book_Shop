@@ -7,8 +7,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -21,15 +19,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
-import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.myapplication_1.Model.Products;
 import com.example.myapplication_1.R;
-import com.example.myapplication_1.Users.Home_Activity;
-import com.example.myapplication_1.Users.Product_Page_Activity;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -53,11 +47,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Objects;
 
-public class Admin_addnewproduct_Activity extends AppCompatActivity {
+public class Admin_change_Activity extends AppCompatActivity {
 
-    public String Description, Price, Name, Author, saveCurrentDate, saveCurrentTime, productRandomKey;
+    public String Category_name, Description, Price, Name, Author, saveCurrentDate, saveCurrentTime, productRandomKey;
 
-    private ImageView productImage, back_btn;
+    private ImageView productImage, back_btn, product_delete;
     private EditText productName, productAuthor, productDescription, productPrice;
     private Button addNewproduct_btn;
 
@@ -72,13 +66,12 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
     private String Key;
     private Calendar calendar;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_admin_addnewcategory);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main7), (v, insets) -> {
+        setContentView(R.layout.activity_admin_change);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -86,11 +79,45 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
 
         Init();
 
+        Output_inf();
+
+        product_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Query check_user = ProductsRef.orderByChild("name").equalTo(Category_name);
+                check_user.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        snapshot.child(Key).getRef().removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if(task.isSuccessful()){
+                                    Toast.makeText(Admin_change_Activity.this, "Книга " + productName.getText().toString() + " удалена", Toast.LENGTH_SHORT).show();
+
+                                    Intent admin_change_intent = new Intent(Admin_change_Activity.this, Admin_Category_Activity.class);
+                                    startActivity(admin_change_intent);
+                                }
+                                else {
+                                    Toast.makeText(Admin_change_Activity.this, "Ошибка: " + task.getException(), Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(Admin_change_Activity.this, "Ошибка: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        });
+
         back_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent admin_addnewproduct_intent = new Intent(Admin_addnewproduct_Activity.this, Admin_Category_Activity.class);
-                startActivity(admin_addnewproduct_intent);
+                Intent admin_change_intent = new Intent(Admin_change_Activity.this, Admin_Category_Activity.class);
+                startActivity(admin_change_intent);
             }
         });
 
@@ -107,7 +134,69 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
                 validate_product_data();
             }
         });
+    }
 
+    private void Output_inf() {
+
+        Query check_user = ProductsRef.orderByChild("name").equalTo(Category_name);
+        check_user.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                for(DataSnapshot ds : snapshot.getChildren())
+                {
+                    Products product = ds.getValue(Products.class);
+                    assert product != null;
+
+                    Key = product.getId();
+
+                    productName.setText(product.getName());
+                    productAuthor.setText(product.getAuthor());
+                    productDescription.setText(product.getDescription());
+                    productPrice.setText(product.getPrice());
+                    Picasso.get().load(product.getImage()).into(productImage);
+
+                    Picasso.get().load(product.getImage()).into(productImage, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Picasso.get().load(product.getImage()).into(new Target() {
+                                @Override
+                                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                                    double width = bitmap.getWidth();
+                                    double height = bitmap.getHeight();
+
+                                    double proportion = height/width;
+
+                                    int result_widht = 1100;
+
+                                    Picasso.get().load(product.getImage()).resize(result_widht, (int) (result_widht * proportion)).into(productImage);
+                                }
+
+                                @Override
+                                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+
+                                }
+
+                                @Override
+                                public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                                }
+                            });
+                        }
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(Admin_change_Activity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                //Toast.makeText(Admin_change_Activity.this, "Ошибка: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void validate_product_data() {
@@ -173,12 +262,12 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
             public void onComplete(@NonNull Task<Uri> task) {
 
                 if (task.isSuccessful()){
-                    Toast.makeText(Admin_addnewproduct_Activity.this, "Фото сохранено", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(Admin_change_Activity.this, "Фото сохранено", Toast.LENGTH_SHORT).show();
                     ImageUri = task.getResult();
                     SaveProductIhfoToDatabase();
                 }
                 else{
-                    Toast.makeText(Admin_addnewproduct_Activity.this, "Ошибка сохранения изображения: " + Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(Admin_change_Activity.this, "Ошибка сохранения изображения", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -222,20 +311,20 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
 
         Products product = new Products(Key, Name, Author, Description, Price, ImageUri.toString(), saveCurrentDate, saveCurrentTime);
 
-        ProductsRef.setValue(product).addOnCompleteListener(new OnCompleteListener<Void>() {
+        ProductsRef.child(Key).setValue(product).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()){
 
                     loadingbar.dismiss();
-                    Toast.makeText(Admin_addnewproduct_Activity.this, "Товар добавлен", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(Admin_change_Activity.this, "Товар добавлен", Toast.LENGTH_SHORT).show();
 
-                    Intent adminadd_intent = new Intent(Admin_addnewproduct_Activity.this, Admin_Category_Activity.class);
+                    Intent adminadd_intent = new Intent(Admin_change_Activity.this, Admin_Category_Activity.class);
                     startActivity(adminadd_intent);
                 }
                 else{
                     String message = Objects.requireNonNull(task.getException()).getMessage();
-                    Toast.makeText(Admin_addnewproduct_Activity.this, "Ошибка: " + message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(Admin_change_Activity.this, "Ошибка: " + message, Toast.LENGTH_LONG).show();
                     loadingbar.dismiss();
                 }
             }
@@ -263,11 +352,11 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
 
     private void Init(){
 
+        Category_name = getIntent().getExtras().get("add_product").toString();
         calendar = Calendar.getInstance();
 
         ProductImageref = FirebaseStorage.getInstance().getReference("Product Images");
-        ProductsRef = FirebaseDatabase.getInstance().getReference("Products").push();
-        Key = ProductsRef.getKey();
+        ProductsRef = FirebaseDatabase.getInstance().getReference("Products");
 
         productImage = findViewById(R.id.select_product_image2);
         productName = findViewById(R.id.product_name);
@@ -276,6 +365,7 @@ public class Admin_addnewproduct_Activity extends AppCompatActivity {
         productPrice = findViewById(R.id.product_name_out9);
         addNewproduct_btn = findViewById(R.id.button_add_newproduct);
         back_btn = findViewById(R.id.imageView123);
+        product_delete = findViewById(R.id.imageView1234);
 
         loadingbar = new ProgressDialog(this);
     }

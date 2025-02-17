@@ -1,14 +1,10 @@
 package com.example.myapplication_1.User_Interface;
 
-import static android.content.ContentValues.TAG;
-
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -22,13 +18,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.myapplication_1.Admin.Admin_Category_Activity;
-import com.example.myapplication_1.Admin.Admin_addnewproduct_Activity;
-import com.example.myapplication_1.Model.Users;
 import com.example.myapplication_1.R;
+import com.example.myapplication_1.Users.Product_Page_Activity;
 import com.example.myapplication_1.databinding.ActivityRegistrationBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -60,13 +53,7 @@ public class Registration_Activity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_registration);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         binding = ActivityRegistrationBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -146,7 +133,7 @@ public class Registration_Activity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                Toast.makeText(Registration_Activity.this, "Ошибка: " + databaseError.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
