@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.viewmodel.CreationExtras;
 
 import com.example.myapplication_1.Model.Nav;
 import com.example.myapplication_1.Model.Products;
@@ -32,6 +34,7 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,6 +48,8 @@ public class Product_Page_Activity extends AppCompatActivity {
     private List<String> listData;
 
     private ActivityProductPageBinding binding;
+
+    private String product_price;
 
     private String Prod_page;
 
@@ -90,7 +95,7 @@ public class Product_Page_Activity extends AppCompatActivity {
                             {
                                 Nav nav0 = ds.getValue(Nav.class);
                                 assert nav0 != null;
-                                if (nav0.getNname().equals(binding.nameBookRecord2.getText().toString()))
+                                if (nav0.name.equals(binding.nameBookRecord2.getText().toString()) && nav0.price.equals(product_price))
                                 {
                                     count++;
                                 }
@@ -101,7 +106,7 @@ public class Product_Page_Activity extends AppCompatActivity {
                             }
                             else
                             {
-                                Nav nav = new Nav(binding.nameBookRecord2.getText().toString());
+                                Nav nav = new Nav(binding.nameBookRecord2.getText().toString(), product_price);
                                 rootRef.push().setValue(nav).addOnCompleteListener(new OnCompleteListener<Void>() {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
@@ -118,7 +123,7 @@ public class Product_Page_Activity extends AppCompatActivity {
                             }
                         }
                         else{
-                            Nav nav = new Nav(binding.nameBookRecord2.getText().toString());
+                            Nav nav = new Nav(binding.nameBookRecord2.getText().toString(), product_price);
                             rootRef.push().setValue(nav).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
@@ -138,7 +143,7 @@ public class Product_Page_Activity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
-
+                        Toast.makeText(Product_Page_Activity.this, "Ошибка: " + Objects.requireNonNull(error).getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
 
@@ -161,7 +166,9 @@ public class Product_Page_Activity extends AppCompatActivity {
                         binding.nameBookRecord2.setText(product.getName());
                         binding.authorBookRecord.setText(product.getAuthor());
                         binding.textView22.setText(product.getDescription());
-                        binding.textView42.setText(product.getPrice());
+                        binding.textView42.setText(product.getPrice() + " ₽");
+
+                        product_price = product.getPrice();
 
                         Picasso.get().load(product.getImage()).into(binding.selectProductImage2, new Callback() {
                             @Override

@@ -88,7 +88,7 @@ public class Admin_Category_Activity extends AppCompatActivity {
 
                 holder.txtProductionName.setText(model.getName());
                 holder.txtProductionAuthor.setText(model.getAuthor());
-                holder.txtProductionPrice.setText(model.getPrice());
+                holder.txtProductionPrice.setText(model.getPrice() + " ₽");
                 holder.cardlayout.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {

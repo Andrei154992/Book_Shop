@@ -106,7 +106,7 @@ public class Home_Activity extends AppCompatActivity implements NavigationView.O
 
                 holder.txtProductionName.setText(model.getName());
                 holder.txtProductionAuthor.setText(model.getAuthor());
-                holder.txtProductionPrice.setText(model.getPrice());
+                holder.txtProductionPrice.setText(model.getPrice() + " ₽");
                 holder.cardlayout.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
